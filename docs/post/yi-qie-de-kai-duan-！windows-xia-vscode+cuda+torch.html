@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html data-color-mode="light" data-dark-theme="dark" data-light-theme="light" lang="zh-CN">
+<head>
+    <meta content="text/html; charset=utf-8" http-equiv="content-type" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <link href='https://mirrors.sustech.edu.cn/cdnjs/ajax/libs/Primer/21.0.7/primer.css' rel='stylesheet' />
+    
+    <link rel="icon" href="https://github.githubassets.com/favicons/favicon.svg"><script>
+        let theme = localStorage.getItem("meek_theme") || "light";
+        document.documentElement.setAttribute("data-color-mode", theme);
+    </script>
+<meta name="description" content="# 1.安装了pytorch的python虚拟环境
+
+![](https://cdn.nlark.com/yuque/0/2024/png/21764230/1728436575784-8e0fb0af-c4e4-484b-a7a9-3e96f07f8a66.png)
+
+# 2.cmake文件
+
+```cmake
+cmake_minimum_required(VERSION 3.22)
+project(paperscuda LANGUAGES CUDA CXX)
+
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON )
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS ON)
+
+# use cudnn for cuda >12.0
+# set(CAFFE2_USE_CUDNN 1)
+set(CAFFE2_USE_CUDNN ON)
+
+# if(MSVC)
+#     add_compile_options('/source-charset:utf-8')
+#     add_compile_options('/execution-charset:gbk')
+# endif(MSVC)
+
+
+set(Python_ROOT_DIR '${CMAKE_SOURCE_DIR}/.venv')
+
+# find python Interpreter
+# find_package(Python3 COMPONENTS Interpreter)
+find_package(Python COMPONENTS Interpreter Development)
+message(STATUS 'Python interpreter: ${Python_EXECUTABLE}')
+
+message(STATUS ${Python_INCLUDE_DIRS})
+
+include_directories(.)
+
+set(Torch_DIR ${Python_ROOT_DIR}/Lib/site-packages/torch/share/cmake/Torch)
+find_package(Torch REQUIRED)
+
+message(STATUS ${CUDA_nvrtc_LIBRARY})
+
+add_executable(main main.cu)
+# add_executable(matmul matmul.cu)
+message(STATUS ${TORCH_LIBRARIES})
+# lib link
+target_link_libraries(main ${TORCH_LIBRARIES})
+
+# add dll to binary
+# 定义lib文件夹路径
+set(LIB_DIR ${Python_ROOT_DIR}/Lib/site-packages/torch/lib)
+
+# 设置目标二进制输出目录
+set(BINARY_DIR ${PROJECT_BINARY_DIR})
+
+# 查找所有 .dll 文件，排除 .lib 文件
+file(GLOB DLL_FILES '${LIB_DIR}/*.dll')
+
+# 添加自定义命令，在 POST_BUILD 阶段执行
+add_custom_command(TARGET main POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${BINARY_DIR}  # 确保目标目录存在
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${DLL_FILES} ${BINARY_DIR}  # 复制所有 .dll 文件到目标目录
+)
+# add_library(paperscuda SHARED library.cu)
+
+# set_target_properties(main PROPERTIES
+#         CUDA_SEPARABLE_COMPILATION ON)
+
+```
+
+main.cu
+
+```cpp
+#include <iostream>
+#include <cuda_runtime.h>
+#include 'device_launch_parameters.h'
+#include <torch/torch.h> // libtorch
+
+using namespace torch; // libtorch
+using namespace std;
+
+__global__ void matmul_gpu(float *A, float *B, float *C, int m, int k, int n)
+{
+    int row = blockIdx.y * blockDim.y + threadIdx.y;
+    int col = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if (row < m && col < n)
+    {
+        float sum = 0.0f;
+        for (int l = 0; l < k; l++)
+        {
+            sum += A[row * k + l] * B[l * n + col];
+        }
+        C[row * n + col] = sum;
+    }
+}
+
+int main()
+{
+    cout << torch::cuda::is_available() << endl;
+    cout << torch::cuda::cudnn_is_available() << endl;
+    cout << torch::cuda::device_count() << endl;
+    return 0;
+}
+```
+
+一个合适的cmake编译输出文件：
+
+```plain
+[main] 正在配置项目: paperscuda 
+[proc] 执行命令: 'C:\Program Files\CMake\bin\cmake.EXE' -DCMAKE_BUILD_TYPE:STRING=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE --no-warn-unused-cli -SD:/GitHub/paperscuda -Bd:/GitHub/paperscuda/build -G Ninja
+[cmake] Not searching for unused variables given on the command line.
+[cmake] -- Python interpreter: D:/GitHub/paperscuda/.venv/Scripts/python.exe
+[cmake] -- C:/Users/Administrator/AppData/Local/Programs/Python/Python310/include
+[cmake] -- Caffe2: CUDA detected: 12.6
+[cmake] -- Caffe2: CUDA nvcc is: C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/bin/nvcc.exe
+[cmake] -- Caffe2: CUDA toolkit directory: C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6
+[cmake] -- Caffe2: Header version is: 12.6
+[cmake] -- C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/lib/x64/nvrtc.lib shorthash is bac8224f
+[cmake] -- USE_CUSPARSELT is set to 0. Compiling without cuSPARSELt support
+[cmake] -- Autodetected CUDA architecture(s):  6.1
+[cmake] -- Added CUDA NVCC flags for: -gencode;arch=compute_61,code=sm_61
+[cmake] -- C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/lib/x64/nvrtc.lib
+[cmake] -- torchtorch_libraryD:/GitHub/paperscuda/.venv/Lib/site-packages/torch/lib/c10.libD:/GitHub/paperscuda/.venv/Lib/site-packages/torch/lib/kineto.libC:\Program Files\NVIDIA Corporation\NvToolsExt\/lib/x64/nvToolsExt64_1.libC:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/lib/x64/cudart_static.libD:/GitHub/paperscuda/.venv/Lib/site-packages/torch/lib/caffe2_nvrtc.libD:/GitHub/paperscuda/.venv/Lib/site-packages/torch/lib/c10_cuda.lib
+[cmake] -- Configuring done (8.6s)
+[cmake] -- Generating done (0.0s)
+[cmake] -- Build files have been written to: D:/GitHub/paperscuda/build
+```
+
+# 3.补充说明
+
+## 1.关于find_package(Python3 COMPONENTS Interpreter)
+
+导入torch需要查找到python解释器和库的位置（这来源于caffe需要借助python来计算库文件的hash值），在启用了virtualvenv时，我们希望找到venv的解释器地址。">
+<meta property="og:title" content="一切的开端！windows下vscode+cuda+torch">
+<meta property="og:description" content="# 1.安装了pytorch的python虚拟环境
+
+![](https://cdn.nlark.com/yuque/0/2024/png/21764230/1728436575784-8e0fb0af-c4e4-484b-a7a9-3e96f07f8a66.png)
+
+# 2.cmake文件
+
+```cmake
+cmake_minimum_required(VERSION 3.22)
+project(paperscuda LANGUAGES CUDA CXX)
+
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON )
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS ON)
+
+# use cudnn for cuda >12.0
+# set(CAFFE2_USE_CUDNN 1)
+set(CAFFE2_USE_CUDNN ON)
+
+# if(MSVC)
+#     add_compile_options('/source-charset:utf-8')
+#     add_compile_options('/execution-charset:gbk')
+# endif(MSVC)
+
+
+set(Python_ROOT_DIR '${CMAKE_SOURCE_DIR}/.venv')
+
+# find python Interpreter
+# find_package(Python3 COMPONENTS Interpreter)
+find_package(Python COMPONENTS Interpreter Development)
+message(STATUS 'Python interpreter: ${Python_EXECUTABLE}')
+
+message(STATUS ${Python_INCLUDE_DIRS})
+
+include_directories(.)
+
+set(Torch_DIR ${Python_ROOT_DIR}/Lib/site-packages/torch/share/cmake/Torch)
+find_package(Torch REQUIRED)
+
+message(STATUS ${CUDA_nvrtc_LIBRARY})
+
+add_executable(main main.cu)
+# add_executable(matmul matmul.cu)
+message(STATUS ${TORCH_LIBRARIES})
+# lib link
+target_link_libraries(main ${TORCH_LIBRARIES})
+
+# add dll to binary
+# 定义lib文件夹路径
+set(LIB_DIR ${Python_ROOT_DIR}/Lib/site-packages/torch/lib)
+
+# 设置目标二进制输出目录
+set(BINARY_DIR ${PROJECT_BINARY_DIR})
+
+# 查找所有 .dll 文件，排除 .lib 文件
+file(GLOB DLL_FILES '${LIB_DIR}/*.dll')
+
+# 添加自定义命令，在 POST_BUILD 阶段执行
+add_custom_command(TARGET main POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${BINARY_DIR}  # 确保目标目录存在
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${DLL_FILES} ${BINARY_DIR}  # 复制所有 .dll 文件到目标目录
+)
+# add_library(paperscuda SHARED library.cu)
+
+# set_target_properties(main PROPERTIES
+#         CUDA_SEPARABLE_COMPILATION ON)
+
+```
+
+main.cu
+
+```cpp
+#include <iostream>
+#include <cuda_runtime.h>
+#include 'device_launch_parameters.h'
+#include <torch/torch.h> // libtorch
+
+using namespace torch; // libtorch
+using namespace std;
+
+__global__ void matmul_gpu(float *A, float *B, float *C, int m, int k, int n)
+{
+    int row = blockIdx.y * blockDim.y + threadIdx.y;
+    int col = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if (row < m && col < n)
+    {
+        float sum = 0.0f;
+        for (int l = 0; l < k; l++)
+        {
+            sum += A[row * k + l] * B[l * n + col];
+        }
+        C[row * n + col] = sum;
+    }
+}
+
+int main()
+{
+    cout << torch::cuda::is_available() << endl;
+    cout << torch::cuda::cudnn_is_available() << endl;
+    cout << torch::cuda::device_count() << endl;
+    return 0;
+}
+```
+
+一个合适的cmake编译输出文件：
+
+```plain
+[main] 正在配置项目: paperscuda 
+[proc] 执行命令: 'C:\Program Files\CMake\bin\cmake.EXE' -DCMAKE_BUILD_TYPE:STRING=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE --no-warn-unused-cli -SD:/GitHub/paperscuda -Bd:/GitHub/paperscuda/build -G Ninja
+[cmake] Not searching for unused variables given on the command line.
+[cmake] -- Python interpreter: D:/GitHub/paperscuda/.venv/Scripts/python.exe
+[cmake] -- C:/Users/Administrator/AppData/Local/Programs/Python/Python310/include
+[cmake] -- Caffe2: CUDA detected: 12.6
+[cmake] -- Caffe2: CUDA nvcc is: C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/bin/nvcc.exe
+[cmake] -- Caffe2: CUDA toolkit directory: C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6
+[cmake] -- Caffe2: Header version is: 12.6
+[cmake] -- C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/lib/x64/nvrtc.lib shorthash is bac8224f
+[cmake] -- USE_CUSPARSELT is set to 0. Compiling without cuSPARSELt support
+[cmake] -- Autodetected CUDA architecture(s):  6.1
+[cmake] -- Added CUDA NVCC flags for: -gencode;arch=compute_61,code=sm_61
+[cmake] -- C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/lib/x64/nvrtc.lib
+[cmake] -- torchtorch_libraryD:/GitHub/paperscuda/.venv/Lib/site-packages/torch/lib/c10.libD:/GitHub/paperscuda/.venv/Lib/site-packages/torch/lib/kineto.libC:\Program Files\NVIDIA Corporation\NvToolsExt\/lib/x64/nvToolsExt64_1.libC:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/lib/x64/cudart_static.libD:/GitHub/paperscuda/.venv/Lib/site-packages/torch/lib/caffe2_nvrtc.libD:/GitHub/paperscuda/.venv/Lib/site-packages/torch/lib/c10_cuda.lib
+[cmake] -- Configuring done (8.6s)
+[cmake] -- Generating done (0.0s)
+[cmake] -- Build files have been written to: D:/GitHub/paperscuda/build
+```
+
+# 3.补充说明
+
+## 1.关于find_package(Python3 COMPONENTS Interpreter)
+
+导入torch需要查找到python解释器和库的位置（这来源于caffe需要借助python来计算库文件的hash值），在启用了virtualvenv时，我们希望找到venv的解释器地址。">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://awsl12581.github.io/post/yi-qie-de-kai-duan-%EF%BC%81windows-xia-vscode%2Bcuda%2Btorch.html">
+<meta property="og:image" content="https://github.githubassets.com/favicons/favicon.svg">
+<title>一切的开端！windows下vscode+cuda+torch</title>
+<link href="//unpkg.com/@wooorm/starry-night@2.1.1/style/both.css" rel="stylesheet" />
+
+
+</head>
+<style>
+body{box-sizing: border-box;min-width: 200px;max-width: 900px;margin: 20px auto;padding: 45px;font-size: 16px;font-family: sans-serif;line-height: 1.25;}
+#header{display:flex;padding-bottom:8px;border-bottom: 1px solid var(--borderColor-muted, var(--color-border-muted));margin-bottom: 16px;}
+#footer {margin-top:64px; text-align: center;font-size: small;}
+
+</style>
+
+<style>
+.postTitle{margin: auto 0;font-size:40px;font-weight:bold;}
+.title-right{display:flex;margin:auto 0 0 auto;}
+.title-right .circle{padding: 14px 16px;margin-right:8px;}
+#postBody{border-bottom: 1px solid var(--color-border-default);padding-bottom:36px;}
+#postBody hr{height:2px;}
+#cmButton{height:48px;margin-top:48px;}
+#comments{margin-top:64px;}
+.g-emoji{font-size:24px;}
+@media (max-width: 600px) {
+    body {padding: 8px;}
+    .postTitle{font-size:24px;}
+}
+.copy-feedback {
+    display: none;
+    position: absolute;
+    top: 10px;
+    right: 50px;
+    color: var(--color-fg-on-emphasis);
+    background-color: var(--color-fg-muted);
+    border-radius: 3px;
+    padding: 5px 8px;
+    font-size: 12px;
+}
+</style>
+
+
+
+
+<body>
+    <div id="header">
+<h1 class="postTitle">一切的开端！windows下vscode+cuda+torch</h1>
+<div class="title-right">
+    <a href="https://awsl12581.github.io" id="buttonHome" class="btn btn-invisible circle" title="首页">
+        <svg class="octicon" width="16" height="16">
+            <path id="pathHome" fill-rule="evenodd"></path>
+        </svg>
+    </a>
+    
+    <a href="https://github.com/awsl12581/awsl12581.github.io/issues/2" target="_blank" class="btn btn-invisible circle" title="Issue">
+        <svg class="octicon" width="16" height="16">
+            <path id="pathIssue" fill-rule="evenodd"></path>
+        </svg>
+    </a>
+    
+
+    <a class="btn btn-invisible circle" onclick="modeSwitch();" title="切换主题">
+        <svg class="octicon" width="16" height="16" >
+            <path id="themeSwitch" fill-rule="evenodd"></path>
+        </svg>
+    </a>
+
+</div>
+</div>
+    <div id="content">
+<div class="markdown-body" id="postBody"><h1>1.安装了pytorch的python虚拟环境</h1>
+<p><a target="_blank" rel="noopener noreferrer nofollow" href="https://camo.githubusercontent.com/ed19e75f838626beb25ba5717cc52def81103fcbcc4bdfb16849e2fb578c3343/68747470733a2f2f63646e2e6e6c61726b2e636f6d2f79757175652f302f323032342f706e672f32313736343233302f313732383433363537353738342d38653066623061662d633465342d343834622d613761392d3365393666303766386136362e706e67"><img src="https://camo.githubusercontent.com/ed19e75f838626beb25ba5717cc52def81103fcbcc4bdfb16849e2fb578c3343/68747470733a2f2f63646e2e6e6c61726b2e636f6d2f79757175652f302f323032342f706e672f32313736343233302f313732383433363537353738342d38653066623061662d633465342d343834622d613761392d3365393666303766386136362e706e67" alt="" data-canonical-src="https://cdn.nlark.com/yuque/0/2024/png/21764230/1728436575784-8e0fb0af-c4e4-484b-a7a9-3e96f07f8a66.png" style="max-width: 100%;"></a></p>
+<h1>2.cmake文件</h1>
+<div class="highlight highlight-source-cmake"><pre class="notranslate"><span class="pl-k">cmake_minimum_required</span>(<span class="pl-e">VERSION</span> 3.22)
+<span class="pl-k">project</span>(paperscuda LANGUAGES CUDA CXX)
+
+<span class="pl-k">set</span>(CMAKE_EXPORT_COMPILE_COMMANDS <span class="pl-k">ON</span> )
+<span class="pl-k">set</span>(CMAKE_CXX_STANDARD 17)
+<span class="pl-k">set</span>(CMAKE_CXX_STANDARD_REQUIRED <span class="pl-k">ON</span>)
+<span class="pl-k">set</span>(CMAKE_CXX_EXTENSIONS <span class="pl-k">ON</span>)
+
+<span class="pl-c"># use cudnn for cuda &gt;12.0</span>
+<span class="pl-c"># set(CAFFE2_USE_CUDNN 1)</span>
+<span class="pl-k">set</span>(CAFFE2_USE_CUDNN <span class="pl-k">ON</span>)
+
+<span class="pl-c"># if(MSVC)</span>
+<span class="pl-c">#     add_compile_options("/source-charset:utf-8")</span>
+<span class="pl-c">#     add_compile_options("/execution-charset:gbk")</span>
+<span class="pl-c"># endif(MSVC)</span>
+
+
+<span class="pl-k">set</span>(Python_ROOT_DIR <span class="pl-s">"<span class="pl-k">${CMAKE_SOURCE_DIR}</span>/.venv"</span>)
+
+<span class="pl-c"># find python Interpreter</span>
+<span class="pl-c"># find_package(Python3 COMPONENTS Interpreter)</span>
+<span class="pl-k">find_package</span>(Python COMPONENTS Interpreter Development)
+<span class="pl-k">message</span>(<span class="pl-e">STATUS</span> <span class="pl-s">"Python interpreter: <span class="pl-k">${Python_EXECUTABLE}</span>"</span>)
+
+<span class="pl-k">message</span>(<span class="pl-e">STATUS</span> <span class="pl-k">${Python_INCLUDE_DIRS}</span>)
+
+<span class="pl-k">include_directories</span>(.)
+
+<span class="pl-k">set</span>(Torch_DIR <span class="pl-k">${Python_ROOT_DIR}</span>/Lib/site-packages/torch/share/cmake/Torch)
+<span class="pl-k">find_package</span>(Torch REQUIRED)
+
+<span class="pl-k">message</span>(<span class="pl-e">STATUS</span> <span class="pl-k">${CUDA_nvrtc_LIBRARY}</span>)
+
+<span class="pl-k">add_executable</span>(main main.cu)
+<span class="pl-c"># add_executable(matmul matmul.cu)</span>
+<span class="pl-k">message</span>(<span class="pl-e">STATUS</span> <span class="pl-k">${TORCH_LIBRARIES}</span>)
+<span class="pl-c"># lib link</span>
+<span class="pl-k">target_link_libraries</span>(main <span class="pl-k">${TORCH_LIBRARIES}</span>)
+
+<span class="pl-c"># add dll to binary</span>
+<span class="pl-c"># 定义lib文件夹路径</span>
+<span class="pl-k">set</span>(LIB_DIR <span class="pl-k">${Python_ROOT_DIR}</span>/Lib/site-packages/torch/lib)
+
+<span class="pl-c"># 设置目标二进制输出目录</span>
+<span class="pl-k">set</span>(BINARY_DIR <span class="pl-k">${PROJECT_BINARY_DIR}</span>)
+
+<span class="pl-c"># 查找所有 .dll 文件，排除 .lib 文件</span>
+<span class="pl-k">file</span>(GLOB DLL_FILES <span class="pl-s">"<span class="pl-k">${LIB_DIR}</span>/*.dll"</span>)
+
+<span class="pl-c"># 添加自定义命令，在 POST_BUILD 阶段执行</span>
+<span class="pl-k">add_custom_command</span>(<span class="pl-k">TARGET</span> main POST_BUILD
+    <span class="pl-k">COMMAND</span> <span class="pl-k">${CMAKE_COMMAND}</span> -E make_directory <span class="pl-k">${BINARY_DIR}</span>  <span class="pl-c"># 确保目标目录存在</span>
+    <span class="pl-k">COMMAND</span> <span class="pl-k">${CMAKE_COMMAND}</span> -E copy_if_different <span class="pl-k">${DLL_FILES}</span> <span class="pl-k">${BINARY_DIR}</span>  <span class="pl-c"># 复制所有 .dll 文件到目标目录</span>
+)
+<span class="pl-c"># add_library(paperscuda SHARED library.cu)</span>
+
+<span class="pl-c"># set_target_properties(main PROPERTIES</span>
+<span class="pl-c">#         CUDA_SEPARABLE_COMPILATION ON)</span>
+</pre></div>
+<p>main.cu</p>
+<div class="highlight highlight-source-c++"><pre class="notranslate">#<span class="pl-k">include</span> <span class="pl-s"><span class="pl-pds">&lt;</span>iostream<span class="pl-pds">&gt;</span></span>
+#<span class="pl-k">include</span> <span class="pl-s"><span class="pl-pds">&lt;</span>cuda_runtime.h<span class="pl-pds">&gt;</span></span>
+#<span class="pl-k">include</span> <span class="pl-s"><span class="pl-pds">"</span>device_launch_parameters.h<span class="pl-pds">"</span></span>
+#<span class="pl-k">include</span> <span class="pl-s"><span class="pl-pds">&lt;</span>torch/torch.h<span class="pl-pds">&gt;</span></span> <span class="pl-c"><span class="pl-c">//</span> libtorch</span>
+
+<span class="pl-k">using</span> <span class="pl-k">namespace</span> <span class="pl-en">torch</span><span class="pl-k">;</span> <span class="pl-c"><span class="pl-c">//</span> libtorch</span>
+<span class="pl-k">using</span> <span class="pl-k">namespace</span> <span class="pl-en">std</span><span class="pl-k">;</span>
+
+__global__ <span class="pl-k">void</span> <span class="pl-en">matmul_gpu</span>(<span class="pl-k">float</span> *A, <span class="pl-k">float</span> *B, <span class="pl-k">float</span> *C, <span class="pl-k">int</span> m, <span class="pl-k">int</span> k, <span class="pl-k">int</span> n)
+{
+    <span class="pl-k">int</span> row = blockIdx.<span class="pl-smi">y</span> * blockDim.<span class="pl-smi">y</span> + threadIdx.<span class="pl-smi">y</span>;
+    <span class="pl-k">int</span> col = blockIdx.<span class="pl-smi">x</span> * blockDim.<span class="pl-smi">x</span> + threadIdx.<span class="pl-smi">x</span>;
+
+    <span class="pl-k">if</span> (row &lt; m &amp;&amp; col &lt; n)
+    {
+        <span class="pl-k">float</span> sum = <span class="pl-c1">0</span>.<span class="pl-c1">0f</span>;
+        <span class="pl-k">for</span> (<span class="pl-k">int</span> l = <span class="pl-c1">0</span>; l &lt; k; l++)
+        {
+            sum += A[row * k + l] * B[l * n + col];
+        }
+        C[row * n + col] = sum;
+    }
+}
+
+<span class="pl-k">int</span> <span class="pl-en">main</span>()
+{
+    cout &lt;&lt; <span class="pl-c1">torch::cuda::is_available</span>() &lt;&lt; endl;
+    cout &lt;&lt; <span class="pl-c1">torch::cuda::cudnn_is_available</span>() &lt;&lt; endl;
+    cout &lt;&lt; <span class="pl-c1">torch::cuda::device_count</span>() &lt;&lt; endl;
+    <span class="pl-k">return</span> <span class="pl-c1">0</span>;
+}</pre></div>
+<p>一个合适的cmake编译输出文件：</p>
+<pre lang="plain" class="notranslate"><code class="notranslate">[main] 正在配置项目: paperscuda 
+[proc] 执行命令: "C:\Program Files\CMake\bin\cmake.EXE" -DCMAKE_BUILD_TYPE:STRING=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE --no-warn-unused-cli -SD:/GitHub/paperscuda -Bd:/GitHub/paperscuda/build -G Ninja
+[cmake] Not searching for unused variables given on the command line.
+[cmake] -- Python interpreter: D:/GitHub/paperscuda/.venv/Scripts/python.exe
+[cmake] -- C:/Users/Administrator/AppData/Local/Programs/Python/Python310/include
+[cmake] -- Caffe2: CUDA detected: 12.6
+[cmake] -- Caffe2: CUDA nvcc is: C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/bin/nvcc.exe
+[cmake] -- Caffe2: CUDA toolkit directory: C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6
+[cmake] -- Caffe2: Header version is: 12.6
+[cmake] -- C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/lib/x64/nvrtc.lib shorthash is bac8224f
+[cmake] -- USE_CUSPARSELT is set to 0. Compiling without cuSPARSELt support
+[cmake] -- Autodetected CUDA architecture(s):  6.1
+[cmake] -- Added CUDA NVCC flags for: -gencode;arch=compute_61,code=sm_61
+[cmake] -- C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/lib/x64/nvrtc.lib
+[cmake] -- torchtorch_libraryD:/GitHub/paperscuda/.venv/Lib/site-packages/torch/lib/c10.libD:/GitHub/paperscuda/.venv/Lib/site-packages/torch/lib/kineto.libC:\Program Files\NVIDIA Corporation\NvToolsExt\/lib/x64/nvToolsExt64_1.libC:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/lib/x64/cudart_static.libD:/GitHub/paperscuda/.venv/Lib/site-packages/torch/lib/caffe2_nvrtc.libD:/GitHub/paperscuda/.venv/Lib/site-packages/torch/lib/c10_cuda.lib
+[cmake] -- Configuring done (8.6s)
+[cmake] -- Generating done (0.0s)
+[cmake] -- Build files have been written to: D:/GitHub/paperscuda/build
+</code></pre>
+<h1>3.补充说明</h1>
+<h2>1.关于find_package(Python3 COMPONENTS Interpreter)</h2>
+<p>导入torch需要查找到python解释器和库的位置（这来源于caffe需要借助python来计算库文件的hash值），在启用了virtualvenv时，我们希望找到venv的解释器地址。<code class="notranslate">find_package(Python3 COMPONENTS Interpreter)</code>可以帮助我们，但需要注意：</p>
+<ul>
+<li>find_package(Python3 COMPONENTS Interpreter)</li>
+<li>find_package(Python2 COMPONENTS Interpreter)</li>
+<li>find_package(Python COMPONENTS Interpreter)</li>
+</ul>
+<p>这三项是不一样的，python3会加上3的导入变量后缀，所以在实际使用中，应该使用第三项，这和caffe使用了python变量前缀有关。</p>
+<p>我们使用<code class="notranslate">set(Python_ROOT_DIR "${CMAKE_SOURCE_DIR}/.venv")</code>来帮助find_package找到解释器位置，对于不同的前缀，需要根据情况改写成Python_、Python3_或者Python2_。</p>
+<h2>2.关于英伟达12.0对某些组件修改</h2>
+<p>英伟达在cuda12.0后对NvToolsExt变为了头文件，而非库文件，解决这一问题直接下载cuda11.8进行单独安装即可。</p>
+<h2>3.关于cudnn等算子出现的问题</h2>
+<p>这些额外组件可能会出现以下状况：</p>
+<pre lang="plain" class="notranslate"><code class="notranslate">[cmake] -- USE_CUDNN is set to 0. Compiling without cuDNN support
+[cmake] -- USE_CUSPARSELT is set to 0. Compiling without cuSPARSELt support
+</code></pre>
+<p>在cuda&gt;12.0时，观察caffe的cmake文件可以看到，需要设置：</p>
+<div class="highlight highlight-source-cmake"><pre class="notranslate"><span class="pl-c"># use cudnn for cuda &gt;12.0</span>
+<span class="pl-c"># set(CAFFE2_USE_CUDNN 1)</span>
+<span class="pl-c"># set(CAFFE2_USE_CUDNN ON)</span></pre></div>
+<p>，值得注意的是，需要提前安装cudnn（将相关文件复制到cuda文件夹下）并配置相关Path变量：</p>
+<div class="highlight highlight-source-cmake"><pre class="notranslate">C:\<span class="pl-k">Program</span> <span class="pl-e">Files</span>\NVIDIA GPU Computing Toolkit\CUDA\v12.1\bin
+C:\<span class="pl-k">Program</span> <span class="pl-e">Files</span>\NVIDIA GPU Computing Toolkit\CUDA\v12.1\libnvvp
+C:\<span class="pl-k">Program</span> <span class="pl-e">Files</span>\NVIDIA GPU Computing Toolkit\CUDA\v12.1\<span class="pl-e">include</span>
+C:\<span class="pl-k">Program</span> <span class="pl-e">Files</span>\NVIDIA GPU Computing Toolkit\CUDA\v12.1\lib</pre></div>
+<h2>4.编译时出现的A single input file is required for a non-link phase when an outputfile is specified</h2>
+<p>出现的原因如下：</p>
+<div class="highlight highlight-source-cmake"><pre class="notranslate"><span class="pl-c"># if(MSVC)</span>
+<span class="pl-c">#     add_compile_options("/source-charset:utf-8")</span>
+<span class="pl-c">#     add_compile_options("/execution-charset:gbk")</span>
+<span class="pl-c"># endif(MSVC)</span></pre></div>
+<p>NVCC 不喜欢从 CXX 编译器传递的任何<code class="notranslate">&lt;font style="color:rgb(12, 13, 14);"&gt;/&lt;/font&gt;</code>标志</p>
+<p>一个可能的设置是（或者不使用中文注释）：</p>
+<div class="highlight highlight-source-cmake"><pre class="notranslate"><span class="pl-k">set</span>(my_cxx_flags -DBOOST_ASIO_DISABLE_CONCEPTS /std:c++latest /await:strict /bigobj <span class="pl-s">"/Zc:__cplusplus"</span>)
+
+<span class="pl-k">target_compile_options</span>(<span class="pl-k">${project}</span> <span class="pl-e">PRIVATE</span> $&lt;$&lt;COMPILE_LANGUAGE:CXX&gt;:<span class="pl-k">${my_cxx_flags}</span>&gt; )</pre></div>
+<h2>5.关于运行时c10.dll等无法找到</h2>
+<p>这是因为使用了动态库dll，在target_link时只是把lib（lib在动态库只有符号表的作用，在静态库会在链接时全部链接）符号表加入进去了，运行时需要把运行库dll也加入到当前文件夹下</p>
+<p>一个可以参考的指令如下：</p>
+<div class="highlight highlight-source-cmake"><pre class="notranslate"><span class="pl-c"># 定义lib文件夹路径</span>
+<span class="pl-k">set</span>(LIB_DIR <span class="pl-k">${PROJECT_SOURCE_DIR}</span>/3rdparty/haikangsdk/lib)
+
+<span class="pl-c"># 定义目标二进制输出目录</span>
+<span class="pl-k">set</span>(BINARY_DIR <span class="pl-k">${PROJECT_BINARY_DIR}</span>)
+<span class="pl-k">add_custom_command</span>(<span class="pl-k">TARGET</span> <span class="pl-k">test</span> POST_BUILD
+    <span class="pl-k">COMMAND</span> <span class="pl-k">${CMAKE_COMMAND}</span> -E copy_directory
+    <span class="pl-k">${LIB_DIR}</span>
+    $&lt;TARGET_FILE_DIR:<span class="pl-k">test</span>&gt;
+)</pre></div>
+<p>注意，需要找到所有dll文件才行</p>
+<h2>6.关于__gobal__非良构现象</h2>
+<p><a target="_blank" rel="noopener noreferrer nofollow" href="https://camo.githubusercontent.com/403b67a597457255dd9fc04491b923140a569756fbb65b5f9e1238147a95df4f/68747470733a2f2f63646e2e6e6c61726b2e636f6d2f79757175652f302f323032342f706e672f32313736343233302f313732383434323334313338322d32376337343132362d656666632d346162322d383166652d3237383661373535373934352e706e67"><img src="https://camo.githubusercontent.com/403b67a597457255dd9fc04491b923140a569756fbb65b5f9e1238147a95df4f/68747470733a2f2f63646e2e6e6c61726b2e636f6d2f79757175652f302f323032342f706e672f32313736343233302f313732383434323334313338322d32376337343132362d656666632d346162322d383166652d3237383661373535373934352e706e67" alt="" data-canonical-src="https://cdn.nlark.com/yuque/0/2024/png/21764230/1728442341382-27c74126-effc-4ab2-81fe-2786a7557945.png" style="max-width: 100%;"></a></p>
+<p>添加相关头文件</p>
+<div class="highlight highlight-source-c++"><pre class="notranslate">#<span class="pl-k">include</span> <span class="pl-s"><span class="pl-pds">"</span>cuda_runtime.h<span class="pl-pds">"</span></span>
+#<span class="pl-k">include</span> <span class="pl-s"><span class="pl-pds">"</span>device_launch_parameters.h<span class="pl-pds">"</span></span></pre></div>
+<h2>关于cuda12.6和pytorch12.4</h2>
+<p><code class="notranslate">&lt;font style="color:rgb(34, 34, 38);"&gt;undefined symbol: __cudaPopCallConfiguration&lt;/font&gt;</code></p>
+<p>在写的过程中会出现一些问题，包括但不限于代码检查报错，但确实能执行下去，主要是因为本文章使用的cuda为12.6，但是pytorch是通过12.4编译的，出现了不一致的问题。</p>
+<h2>引发异常：0xC0000005:读取位置0xFFFFFFFFFFFFFFFE时发生访问冲突</h2>
+<p><a target="_blank" rel="noopener noreferrer nofollow" href="https://camo.githubusercontent.com/1e983bca73669972c47b3902fc0da7afba9f4938ec2cb25e0c208c2eaac6b4ff/68747470733a2f2f63646e2e6e6c61726b2e636f6d2f79757175652f302f323032342f706e672f32313736343233302f313732383831303736323935322d30306261663661382d363135342d346264662d623164652d6533303335326266303766392e706e67"><img src="https://camo.githubusercontent.com/1e983bca73669972c47b3902fc0da7afba9f4938ec2cb25e0c208c2eaac6b4ff/68747470733a2f2f63646e2e6e6c61726b2e636f6d2f79757175652f302f323032342f706e672f32313736343233302f313732383831303736323935322d30306261663661382d363135342d346264662d623164652d6533303335326266303766392e706e67" alt="" data-canonical-src="https://cdn.nlark.com/yuque/0/2024/png/21764230/1728810762952-00baf6a8-6154-4bdf-b1de-e30352bf07f9.png" style="max-width: 100%;"></a></p>
+<p>出现这个问题的原因和前面的“torch-NOTFOUND.obj无法找到”是一样的。也是因为下载的libtorch是release版本的, 却在debug下编译, 或者反之。</p>
+<p>所以解决方法就是在release下编译release版本的libtorch，用debug编译debug版本的libtorch。</p>
+<h2>error ：c2872 std 不明确的符号</h2>
+<p>解决方法：将 <strong>属性》C/C++》语言》符合模式</strong> 改为<strong>否</strong>，问题解决。</p>
+<p><a target="_blank" rel="noopener noreferrer nofollow" href="https://camo.githubusercontent.com/796fb297a1af6a336fec2ff35b740e6462c79aa91e563c79706bbc68ea56f8f6/68747470733a2f2f63646e2e6e6c61726b2e636f6d2f79757175652f302f323032342f706e672f32313736343233302f313732383831303830363330322d33633464343039612d306466302d343366372d626466652d3632643737303237653834372e706e67"><img src="https://camo.githubusercontent.com/796fb297a1af6a336fec2ff35b740e6462c79aa91e563c79706bbc68ea56f8f6/68747470733a2f2f63646e2e6e6c61726b2e636f6d2f79757175652f302f323032342f706e672f32313736343233302f313732383831303830363330322d33633464343039612d306466302d343366372d626466652d3632643737303237653834372e706e67" alt="" data-canonical-src="https://cdn.nlark.com/yuque/0/2024/png/21764230/1728810806302-3c4d409a-0df0-43f7-bdfe-62d77027e847.png" style="max-width: 100%;"></a></p>
+<p><a target="_blank" rel="noopener noreferrer nofollow" href="https://camo.githubusercontent.com/60f783e46b15aa0360d7f78693b3e424d3b822c7b4ae542a59547f01c999def3/68747470733a2f2f63646e2e6e6c61726b2e636f6d2f79757175652f302f323032342f706e672f32313736343233302f313732383831303831303330322d65316662663063662d356236622d346439382d623835312d3938303262663364653061362e706e67"><img src="https://camo.githubusercontent.com/60f783e46b15aa0360d7f78693b3e424d3b822c7b4ae542a59547f01c999def3/68747470733a2f2f63646e2e6e6c61726b2e636f6d2f79757175652f302f323032342f706e672f32313736343233302f313732383831303831303330322d65316662663063662d356236622d346439382d623835312d3938303262663364653061362e706e67" alt="" data-canonical-src="https://cdn.nlark.com/yuque/0/2024/png/21764230/1728810810302-e1fbf0cf-5b6b-4d98-b851-9802bf3de0a6.png" style="max-width: 100%;"></a></p></div>
+<div style="font-size:small;margin-top:8px;float:right;"></div>
+
+<button class="btn btn-block" type="button" onclick="openComments()" id="cmButton">评论</button>
+<div class="comments" id="comments"></div>
+
+</div>
+    <div id="footer"><div id="footer1">Copyright © <span id="copyrightYear"></span> <a href="https://awsl12581.github.io">Tea!</a></div>
+<div id="footer2">
+    <span id="runday"></span><span>Powered by <a href="https://meekdai.com/Gmeek.html" target="_blank">Gmeek</a></span>
+</div>
+
+<script>
+var now=new Date();
+document.getElementById("copyrightYear").innerHTML=now.getFullYear();
+
+if(""!=""){
+    var startSite=new Date("");
+    var diff=now.getTime()-startSite.getTime();
+    var diffDay=Math.floor(diff/(1000*60*60*24));
+    document.getElementById("runday").innerHTML="网站运行"+diffDay+"天"+" • ";
+}
+</script></div>
+</body>
+<script>
+var IconList={'sun': 'M8 10.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5zM8 12a4 4 0 100-8 4 4 0 000 8zM8 0a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0V.75A.75.75 0 018 0zm0 13a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5A.75.75 0 018 13zM2.343 2.343a.75.75 0 011.061 0l1.06 1.061a.75.75 0 01-1.06 1.06l-1.06-1.06a.75.75 0 010-1.06zm9.193 9.193a.75.75 0 011.06 0l1.061 1.06a.75.75 0 01-1.06 1.061l-1.061-1.06a.75.75 0 010-1.061zM16 8a.75.75 0 01-.75.75h-1.5a.75.75 0 010-1.5h1.5A.75.75 0 0116 8zM3 8a.75.75 0 01-.75.75H.75a.75.75 0 010-1.5h1.5A.75.75 0 013 8zm10.657-5.657a.75.75 0 010 1.061l-1.061 1.06a.75.75 0 11-1.06-1.06l1.06-1.06a.75.75 0 011.06 0zm-9.193 9.193a.75.75 0 010 1.06l-1.06 1.061a.75.75 0 11-1.061-1.06l1.06-1.061a.75.75 0 011.061 0z', 'moon': 'M9.598 1.591a.75.75 0 01.785-.175 7 7 0 11-8.967 8.967.75.75 0 01.961-.96 5.5 5.5 0 007.046-7.046.75.75 0 01.175-.786zm1.616 1.945a7 7 0 01-7.678 7.678 5.5 5.5 0 107.678-7.678z', 'sync': 'M1.705 8.005a.75.75 0 0 1 .834.656 5.5 5.5 0 0 0 9.592 2.97l-1.204-1.204a.25.25 0 0 1 .177-.427h3.646a.25.25 0 0 1 .25.25v3.646a.25.25 0 0 1-.427.177l-1.38-1.38A7.002 7.002 0 0 1 1.05 8.84a.75.75 0 0 1 .656-.834ZM8 2.5a5.487 5.487 0 0 0-4.131 1.869l1.204 1.204A.25.25 0 0 1 4.896 6H1.25A.25.25 0 0 1 1 5.75V2.104a.25.25 0 0 1 .427-.177l1.38 1.38A7.002 7.002 0 0 1 14.95 7.16a.75.75 0 0 1-1.49.178A5.5 5.5 0 0 0 8 2.5Z', 'home': 'M6.906.664a1.749 1.749 0 0 1 2.187 0l5.25 4.2c.415.332.657.835.657 1.367v7.019A1.75 1.75 0 0 1 13.25 15h-3.5a.75.75 0 0 1-.75-.75V9H7v5.25a.75.75 0 0 1-.75.75h-3.5A1.75 1.75 0 0 1 1 13.25V6.23c0-.531.242-1.034.657-1.366l5.25-4.2Zm1.25 1.171a.25.25 0 0 0-.312 0l-5.25 4.2a.25.25 0 0 0-.094.196v7.019c0 .138.112.25.25.25H5.5V8.25a.75.75 0 0 1 .75-.75h3.5a.75.75 0 0 1 .75.75v5.25h2.75a.25.25 0 0 0 .25-.25V6.23a.25.25 0 0 0-.094-.195Z', 'github': 'M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z', 'copy': 'M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z', 'check': 'M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z'};
+var utterancesLoad=0;
+
+let themeSettings={
+    "dark": ["dark","moon","#00f0ff","dark-blue"],
+    "light": ["light","sun","#ff5000","github-light"],
+    "auto": ["auto","sync","","preferred-color-scheme"]
+};
+function changeTheme(mode, icon, color, utheme){
+    document.documentElement.setAttribute("data-color-mode",mode);
+    document.getElementById("themeSwitch").setAttribute("d",value=IconList[icon]);
+    document.getElementById("themeSwitch").parentNode.style.color=color;
+    if(utterancesLoad==1){utterancesTheme(utheme);}
+}
+function modeSwitch(){
+    let currentMode=document.documentElement.getAttribute('data-color-mode');
+    let newMode = currentMode === "light" ? "dark" : currentMode === "dark" ? "auto" : "light";
+    localStorage.setItem("meek_theme", newMode);
+    if(themeSettings[newMode]){
+        changeTheme(...themeSettings[newMode]);
+    }
+}
+function utterancesTheme(theme){
+    const message={type:'set-theme',theme: theme};
+    const iframe=document.getElementsByClassName('utterances-frame')[0];
+    iframe.contentWindow.postMessage(message,'https://utteranc.es');
+}
+if(themeSettings[theme]){changeTheme(...themeSettings[theme]);}
+console.log("\n %c Gmeek main https://github.com/Meekdai/Gmeek \n","padding:5px 0;background:#02d81d;color:#fff");
+</script>
+
+<script>
+document.getElementById("pathHome").setAttribute("d",IconList["home"]);
+document.getElementById("pathIssue").setAttribute("d",IconList["github"]);
+
+
+
+function openComments(){
+    cm=document.getElementById("comments");
+    cmButton=document.getElementById("cmButton");
+    cmButton.disabled=true;
+    cmButton.innerHTML="loading";
+    span=document.createElement("span");
+    span.setAttribute("class","AnimatedEllipsis");
+    cmButton.appendChild(span);
+
+    script=document.createElement("script");
+    script.setAttribute("src","https://utteranc.es/client.js");
+    script.setAttribute("repo","awsl12581/awsl12581.github.io");
+    script.setAttribute("issue-term","title");
+    
+    if(localStorage.getItem("meek_theme")=="dark"){script.setAttribute("theme","dark-blue");}
+    else if(localStorage.getItem("meek_theme")=="light") {script.setAttribute("theme","github-light");}
+    else{script.setAttribute("theme","preferred-color-scheme");}
+    
+    script.setAttribute("crossorigin","anonymous");
+    script.setAttribute("async","");
+    cm.appendChild(script);
+
+    int=self.setInterval("iFrameLoading()",200);
+}
+
+function iFrameLoading(){
+    var utterances=document.getElementsByClassName('utterances');
+    if(utterances.length==1){
+        if(utterances[0].style.height!=""){
+            utterancesLoad=1;
+            int=window.clearInterval(int);
+            document.getElementById("cmButton").style.display="none";
+            console.log("utterances Load OK");
+        }
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const createClipboardHTML = (codeContent, additionalClasses = '') => `
+        <pre class="notranslate"><code class="notranslate">${codeContent}</code></pre>
+        <div class="clipboard-container position-absolute right-0 top-0 ${additionalClasses}">
+            <clipboard-copy class="ClipboardButton btn m-2 p-0" role="button" style="display: inherit;">
+                <svg height="16" width="16" class="octicon octicon-copy m-2"><path d="${IconList["copy"]}"></path></svg>
+                <svg height="16" width="16" class="octicon octicon-check color-fg-success m-2 d-none"><path d="${IconList["check"]}"></path></svg>
+            </clipboard-copy>
+            <div class="copy-feedback">Copied!</div>
+        </div>
+    `;
+
+    const handleCodeElements = (selector = '') => {
+        document.querySelectorAll(selector).forEach(codeElement => {
+            const codeContent = codeElement.innerHTML;
+            const newStructure = document.createElement('div');
+            newStructure.className = 'snippet-clipboard-content position-relative overflow-auto';
+            newStructure.innerHTML = createClipboardHTML(codeContent);
+
+            const parentElement = codeElement.parentElement;
+            if (selector.includes('highlight')) {
+                parentElement.insertBefore(newStructure, codeElement.nextSibling);
+                parentElement.removeChild(codeElement);
+            } else {
+                parentElement.parentElement.replaceChild(newStructure, parentElement);
+            }
+        });
+    };
+
+    handleCodeElements('pre.notranslate > code.notranslate');
+    handleCodeElements('div.highlight > pre.notranslate');
+
+    let currentFeedback = null;
+    document.querySelectorAll('clipboard-copy').forEach(copyButton => {
+        copyButton.addEventListener('click', () => {
+            const codeContent = copyButton.closest('.snippet-clipboard-content').innerText;
+            const tempTextArea = document.createElement('textarea');
+            tempTextArea.value = codeContent;
+            document.body.appendChild(tempTextArea);
+            tempTextArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempTextArea);
+
+            const copyIcon = copyButton.querySelector('.octicon-copy');
+            const checkIcon = copyButton.querySelector('.octicon-check');
+            const copyFeedback = copyButton.nextElementSibling;
+
+            if (currentFeedback && currentFeedback !== copyFeedback) {currentFeedback.style.display = 'none';}
+            currentFeedback = copyFeedback;
+
+            copyIcon.classList.add('d-none');
+            checkIcon.classList.remove('d-none');
+            copyFeedback.style.display = 'block';
+            copyButton.style.borderColor = 'var(--color-success-fg)';
+
+            setTimeout(() => {
+                copyIcon.classList.remove('d-none');
+                checkIcon.classList.add('d-none');
+                copyFeedback.style.display = 'none';
+                copyButton.style.borderColor = '';
+            }, 2000);
+        });
+    });
+});
+
+</script>
+<script src='https://blog.meekdai.com/Gmeek/plugins/GmeekTOC.js'></script><script src='https://blog.meekdai.com/Gmeek/plugins/lightbox.js'></script>
+
+</html>
