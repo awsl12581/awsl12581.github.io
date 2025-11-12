@@ -1,5 +1,241 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<rss xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" version="2.0"><channel><title>Tea!</title><link>https://awsl12581.github.io</link><description>Blog description</description><copyright>Tea!</copyright><docs>http://www.rssboard.org/rss-specification</docs><generator>python-feedgen</generator><image><url>https://github.githubassets.com/favicons/favicon.svg</url><title>avatar</title><link>https://awsl12581.github.io</link></image><lastBuildDate>Mon, 17 Feb 2025 06:57:20 +0000</lastBuildDate><managingEditor>Tea!</managingEditor><ttl>60</ttl><webMaster>Tea!</webMaster><item><title>vscode .conda虚拟环境无法自动在终端激活</title><link>https://awsl12581.github.io/post/vscode%20.conda-xu-ni-huan-jing-wu-fa-zi-dong-zai-zhong-duan-ji-huo.html</link><description>[[Activate Environments in Terminal Using Environment Variables](https://aka.ms/vscodePythonTerminalActivation)](https://aka.ms/vscodePythonTerminalActivation)
+<rss xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" version="2.0"><channel><title>Tea!</title><link>https://awsl12581.github.io</link><description>Blog description</description><copyright>Tea!</copyright><docs>http://www.rssboard.org/rss-specification</docs><generator>python-feedgen</generator><image><url>https://github.githubassets.com/favicons/favicon.svg</url><title>avatar</title><link>https://awsl12581.github.io</link></image><lastBuildDate>Wed, 12 Nov 2025 02:14:57 +0000</lastBuildDate><managingEditor>Tea!</managingEditor><ttl>60</ttl><webMaster>Tea!</webMaster><item><title>在vs2022和vs2026并存情况下，通过cmakepreset切换的配置文件</title><link>https://awsl12581.github.io/post/zai-vs2022-he-vs2026-bing-cun-qing-kuang-xia-%EF%BC%8C-tong-guo-cmakepreset-qie-huan-de-pei-zhi-wen-jian.html</link><description>```json
+{
+    'version': 6,
+    'cmakeMinimumRequired': {
+        'major': 3,
+        'minor': 22,
+        'patch': 0
+    },
+    'configurePresets': [
+        {
+            'name': 'base',
+            'displayName': 'Basic Config',
+            'description': 'Basic build using Ninja generator',
+            'generator': 'Ninja',
+            'hidden': true,
+            'binaryDir': '${sourceDir}/build/${presetName}',
+            'cacheVariables': {
+                'CMAKE_INSTALL_PREFIX': '${sourceDir}/install/${presetName}'
+            }
+        },
+        {
+            'name': 'x64',
+            'architecture': {
+                'value': 'x64',
+                'strategy': 'external'
+            },
+            'cacheVariables': {
+                'DIRECTX_ARCH': 'x64'
+            },
+            'hidden': true
+        },
+        {
+            'name': 'Debug',
+            'cacheVariables': {
+                'CMAKE_BUILD_TYPE': 'Debug'
+            },
+            'hidden': true
+        },
+        {
+            'name': 'Release',
+            'cacheVariables': {
+                'CMAKE_BUILD_TYPE': 'Release',
+                'CMAKE_INTERPROCEDURAL_OPTIMIZATION': true
+            },
+            'hidden': true
+        },
+        {
+            'name': 'MSVC',
+            'hidden': true,
+            'cacheVariables': {
+                'CMAKE_CXX_COMPILER': 'cl.exe'
+            },
+            'toolset': {
+                'value': 'v143,host=x64,version=14.44.35207',
+                'strategy': 'external'
+            }
+        },
+        {
+            'name': 'MSVC2026',
+            'hidden': true,
+            'cacheVariables': {
+                'CMAKE_POLICY_VERSION_MINIMUM': '3.5',
+                'CMAKE_CXX_COMPILER': 'cl.exe',
+                'CMAKE_CUDA_FLAGS': '--allow-unsupported-compiler'
+            },
+            'toolset': {
+                'value': 'v145,host=x64,version=14.50.35717',
+                'strategy': 'external'
+            }
+        },
+        {
+            'name': 'x64-Debug',
+            'description': 'MSVC for x64 (Debug)',
+            'inherits': ['base', 'x64', 'Debug', 'MSVC']
+        },
+        {
+            'name': 'x64-Release',
+            'description': 'MSVC for x64 (Release)',
+            'inherits': ['base', 'x64', 'Release', 'MSVC']
+        },
+        {
+            'name': 'x64-Debug-2026',
+            'description': 'MSVC 2026 for x64 (Debug)',
+            'inherits': ['base', 'x64', 'Debug', 'MSVC2026']
+        },
+        {
+            'name': 'x64-Release-2026',
+            'description': 'MSVC 2026 for x64 (Release)',
+            'inherits': ['base', 'x64', 'Release', 'MSVC2026']
+        }
+    ],
+    'buildPresets': [
+        {
+            'name': 'x64-Debug-Build',
+            'configurePreset': 'x64-Debug',
+            'jobs': 10,
+            'verbose': true
+        },
+        {
+            'name': 'x64-Release-Build',
+            'configurePreset': 'x64-Release',
+            'jobs': 10,
+            'verbose': false
+        },
+        {
+            'name': 'x64-Debug-2026-Build',
+            'configurePreset': 'x64-Debug-2026',
+            'jobs': 10,
+            'verbose': true
+        },
+        {
+            'name': 'x64-Release-2026-Build',
+            'configurePreset': 'x64-Release-2026',
+            'jobs': 10,
+            'verbose': false
+        }
+    ]
+}
+```
+
+记得修改``version=xxxx.xxxx.xxxx....``版本号才会起作用，另外CUDA暂时不支持vs2026，所以要添加``'CMAKE_CUDA_FLAGS': '--allow-unsupported-compiler'``。</description><guid isPermaLink="true">https://awsl12581.github.io/post/zai-vs2022-he-vs2026-bing-cun-qing-kuang-xia-%EF%BC%8C-tong-guo-cmakepreset-qie-huan-de-pei-zhi-wen-jian.html</guid><pubDate>Sat, 08 Nov 2025 03:33:27 +0000</pubDate></item><item><title>vscode安装esp-idf插件后和cmake-tool适配的cmakepreset.json</title><link>https://awsl12581.github.io/post/vscode-an-zhuang-esp-idf-cha-jian-hou-he-cmake-tool-shi-pei-de-cmakepreset.json.html</link><description>```json
+{
+    'version': 6,
+    'cmakeMinimumRequired': {
+        'major': 3,
+        'minor': 22,
+        'patch': 0
+    },
+    'configurePresets': [
+        {
+            'name': 'base',
+            'displayName': 'Basic Config',
+            'description': 'Basic build using Ninja generator',
+            'generator': 'Ninja',
+            'hidden': true,
+            'binaryDir': '${sourceDir}/build_win/${presetName}',
+            'cacheVariables': {
+                'CMAKE_INSTALL_PREFIX': '${sourceDir}/install_win/${presetName}'
+            }
+        },
+        {
+            'name': 'Debug',
+            'cacheVariables': {
+                'CMAKE_BUILD_TYPE': 'Debug'
+            },
+            'hidden': true
+        },
+        {
+            'name': 'ESP32-S3',
+            'hidden': true,
+            'cacheVariables': {
+                'CMAKE_CXX_COMPILER': 'xtensa-esp32s3-elf-g++.exe',
+                'CMAKE_C_COMPILER': 'xtensa-esp32s3-elf-gcc.exe',
+                'CMAKE_ASM_COMPILER': 'xtensa-esp32s3-elf-gcc.exe'
+
+            },
+            'environment': {
+                'PYTHON':'C:/Users/&lt;your-name&gt;/.espressif/python_env/idf5.5_py3.11_env/Scripts/python.exe',
+                'PYTHON_HOME': 'C:/Users/&lt;your-name&gt;/.espressif/python_env/idf5.5_py3.11_env',
+                'PYTHON_EXECUTABLE': 'C:/Users/&lt;your-name&gt;/.espressif/python_env/idf5.5_py3.11_env/Scripts/python.exe',
+                'IDF_PATH': 'C:/Users/&lt;your-name&gt;/esp/v5.5.1/esp-idf',
+                'PATH': 'C:/Users/&lt;your-name&gt;/.espressif/tools/xtensa-esp-elf/esp-14.2.0_20241119/xtensa-esp-elf/bin;$penv{path}'
+            }
+        },
+        {
+            'name': 'x64-Debug',
+            'description': 'ESP32-S3 for x64 (Debug)',
+            'inherits': ['base', 'Debug', 'ESP32-S3']
+        }
+    ],
+    'buildPresets': [
+        {
+            'name': 'x64-Debug-Build',
+            'configurePreset': 'x64-Debug',
+            'jobs': 10,
+            'verbose': true
+        }
+    ]
+}
+
+```
+这里的编译仅仅作为cmake-tool代码提示工具，尽管和esp-idf插件的结果基本一致，但是由于要在esp32上烧录和适配，因此请尽量使用esp插件。</description><guid isPermaLink="true">https://awsl12581.github.io/post/vscode-an-zhuang-esp-idf-cha-jian-hou-he-cmake-tool-shi-pei-de-cmakepreset.json.html</guid><pubDate>Sat, 08 Nov 2025 03:30:06 +0000</pubDate></item><item><title>从零开始的SLAM建图（以X2L为例）</title><link>https://awsl12581.github.io/post/cong-ling-kai-shi-de-SLAM-jian-tu-%EF%BC%88-yi-X2L-wei-li-%EF%BC%89.html</link><description>[从零开始的SLAM建图（以X2L为例）.md](https://github.com/user-attachments/files/22318013/SLAM.X2L.md)
+# 前言
+本次的探索是从激光雷达拆开上电开始，到SLAM图建立的过程，中间涉及的专业性知识，比如订阅与发布之类的，可以在B站搜索ROS进行学习
+
+
+
+# 正文
+## 前提条件
+&gt; Ubuntu20.04（不要使用21.04，这是个大坑）
+&gt;
+&gt; YDLIDAR X2 激光雷达（包括转接器，usb转type-c线，以及雷达本体）
+&gt;
+&gt; 一个善于思考的大脑和一双手
+&gt;
+
+`**资料引用**`
+
+&gt; [https://ydlidar.cn/service_support/download.html](https://ydlidar.cn/service_support/download.html)
+&gt;
+&gt; 官方资料支持
+&gt;
+&gt; [https://blog.csdn.net/zhu751191958/category_7380985.html](https://blog.csdn.net/zhu751191958/category_7380985.html)
+&gt;
+&gt; 感谢这位大佬的整理
+&gt;
+&gt; [https://blog.csdn.net/r1141207831/article/details/106327172](https://blog.csdn.net/r1141207831/article/details/106327172)
+&gt;
+&gt; 20.04版本的ROS（包括rviz）安装
+&gt;
+
+## 在Ubuntu20.04中安装ROS Noetic（包括可视化的rviz）
+在20.04版本下，最最最推荐安装Noetic版本
+
+### &lt;font style='color:rgb(77, 77, 77);'&gt;1、添加 sources.list（设置你的电脑可以从 packages.ros.org 接收软件.）&lt;/font&gt;
+```shell
+sudo sh -c 'echo 'deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main' &gt; /etc/apt/sources.list.d/ros-latest.list'
+
+```
+
+### 2、添加 keys
+```shell
+sudo apt-key adv --keyserver 'hkp://keyserver.ubuntu.com:80' --recv-key C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654
+
+```
+
+### 3、安装,首先，确保你的Debian软件包索引是最新的：
+```shell
+sudo apt update
+```
+
+### 4、安装桌面完整版 : 包含ROS、[rqt](http://wiki.ros.org/rqt)、[rviz](http://wiki.ros.org/rviz)、机器人通用库、2D/3D 模拟器、导航以及2D/3D感知
+```shell
+sudo apt install ros-noetic-desktop-full
+```
+
+### 5、您必须在使用ROS的每个bash终端中获取此脚本的源代码。</description><guid isPermaLink="true">https://awsl12581.github.io/post/cong-ling-kai-shi-de-SLAM-jian-tu-%EF%BC%88-yi-X2L-wei-li-%EF%BC%89.html</guid><pubDate>Sun, 14 Sep 2025 04:02:57 +0000</pubDate></item><item><title>vscode .conda虚拟环境无法自动在终端激活</title><link>https://awsl12581.github.io/post/vscode%20.conda-xu-ni-huan-jing-wu-fa-zi-dong-zai-zhong-duan-ji-huo.html</link><description>[[Activate Environments in Terminal Using Environment Variables](https://aka.ms/vscodePythonTerminalActivation)](https://aka.ms/vscodePythonTerminalActivation)
 
 [[Extension fails to activate unnamed conda environments · Issue #24095 · microsoft/vscode-python](https://github.com/microsoft/vscode-python/issues/24095)](https://github.com/microsoft/vscode-python/issues/24095)
 
