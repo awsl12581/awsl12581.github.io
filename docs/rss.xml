@@ -1,5 +1,54 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<rss xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" version="2.0"><channel><title>Tea!</title><link>https://awsl12581.github.io</link><description>Blog description</description><copyright>Tea!</copyright><docs>http://www.rssboard.org/rss-specification</docs><generator>python-feedgen</generator><image><url>https://github.githubassets.com/favicons/favicon.svg</url><title>avatar</title><link>https://awsl12581.github.io</link></image><lastBuildDate>Wed, 12 Nov 2025 02:14:57 +0000</lastBuildDate><managingEditor>Tea!</managingEditor><ttl>60</ttl><webMaster>Tea!</webMaster><item><title>在vs2022和vs2026并存情况下，通过cmakepreset切换的配置文件</title><link>https://awsl12581.github.io/post/zai-vs2022-he-vs2026-bing-cun-qing-kuang-xia-%EF%BC%8C-tong-guo-cmakepreset-qie-huan-de-pei-zhi-wen-jian.html</link><description>```json
+<rss xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" version="2.0"><channel><title>Tea!</title><link>https://awsl12581.github.io</link><description>Blog description</description><copyright>Tea!</copyright><docs>http://www.rssboard.org/rss-specification</docs><generator>python-feedgen</generator><image><url>https://github.githubassets.com/favicons/favicon.svg</url><title>avatar</title><link>https://awsl12581.github.io</link></image><lastBuildDate>Thu, 08 Jan 2026 02:49:55 +0000</lastBuildDate><managingEditor>Tea!</managingEditor><ttl>60</ttl><webMaster>Tea!</webMaster><item><title>在vscode中使用Visual Studio 2022 Developer PowerShell</title><link>https://awsl12581.github.io/post/zai-vscode-zhong-shi-yong-Visual%20Studio%202022%20Developer%20PowerShell.html</link><description>```json
+{
+    'python.testing.pytestArgs': [
+        'test'
+    ],
+    'python.testing.unittestEnabled': false,
+    'python.testing.pytestEnabled': true,
+    '[python]': {
+        'editor.defaultFormatter': 'ms-python.black-formatter',
+        'editor.formatOnSave': true
+    },
+    'python-envs.defaultEnvManager': 'ms-python.python:conda',
+    'python-envs.defaultPackageManager': 'ms-python.python:conda',
+    'python-envs.pythonProjects': [],
+    'python.envFile': '${workspaceFolder}/.env',
+    'terminal.integrated.suggest.enabled': false,
+    'terminal.integrated.defaultProfile.windows': 'VSDev_PowerShell(2022)',
+    'terminal.integrated.profiles.windows': {
+        'VSDev_PowerShell(2022)': {
+            'args': [
+                '-noe',
+                '-c',
+                '&amp;{Import-Module \'C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\Tools\\Microsoft.VisualStudio.DevShell.dll\'; Enter-VsDevShell 2dab4dc2 -SkipAutomaticLocation -DevCmdArguments \'-arch=x64 -host_arch=x64\'}'
+            ],
+            'source': 'PowerShell',
+            'icon': 'terminal-powershell'
+        },
+        'VsDevCmd (2022)': {
+            'path': [
+                '${env:windir}\\Sysnative\\cmd.exe',
+                '${env:windir}\\System32\\cmd.exe'
+            ],
+            'args': [
+                '/k',
+                // Path below assumes a VS2022 Community install; 
+                // update as appropriate if your IDE installation path
+                // is different, or if using the standalone build tools
+                'C:/Program Files/Microsoft Visual Studio/2022/Community/Common7/Tools/VsDevCmd.bat',
+                '-arch=x64',
+                '-host_arch=x64'
+            ],
+            'overrideName': true,
+            'icon': 'terminal-cmd'
+        },
+    },
+}
+```
+请注意修改
+Enter-VsDevShell 2dab4dc2
+方法: 按照桌面terminal中的setting来确定。</description><guid isPermaLink="true">https://awsl12581.github.io/post/zai-vscode-zhong-shi-yong-Visual%20Studio%202022%20Developer%20PowerShell.html</guid><pubDate>Thu, 08 Jan 2026 02:49:05 +0000</pubDate></item><item><title>在vs2022和vs2026并存情况下，通过cmakepreset切换的配置文件</title><link>https://awsl12581.github.io/post/zai-vs2022-he-vs2026-bing-cun-qing-kuang-xia-%EF%BC%8C-tong-guo-cmakepreset-qie-huan-de-pei-zhi-wen-jian.html</link><description>```json
 {
     'version': 6,
     'cmakeMinimumRequired': {
