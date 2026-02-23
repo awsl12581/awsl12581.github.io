@@ -1,5 +1,60 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<rss xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" version="2.0"><channel><title>Tea!</title><link>https://awsl12581.github.io</link><description>Blog description</description><copyright>Tea!</copyright><docs>http://www.rssboard.org/rss-specification</docs><generator>python-feedgen</generator><image><url>https://github.githubassets.com/favicons/favicon.svg</url><title>avatar</title><link>https://awsl12581.github.io</link></image><lastBuildDate>Thu, 08 Jan 2026 02:49:55 +0000</lastBuildDate><managingEditor>Tea!</managingEditor><ttl>60</ttl><webMaster>Tea!</webMaster><item><title>在vscode中使用Visual Studio 2022 Developer PowerShell</title><link>https://awsl12581.github.io/post/zai-vscode-zhong-shi-yong-Visual%20Studio%202022%20Developer%20PowerShell.html</link><description>```json
+<rss xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" version="2.0"><channel><title>Tea!</title><link>https://awsl12581.github.io</link><description>Blog description</description><copyright>Tea!</copyright><docs>http://www.rssboard.org/rss-specification</docs><generator>python-feedgen</generator><image><url>https://github.githubassets.com/favicons/favicon.svg</url><title>avatar</title><link>https://awsl12581.github.io</link></image><lastBuildDate>Mon, 23 Feb 2026 10:47:55 +0000</lastBuildDate><managingEditor>Tea!</managingEditor><ttl>60</ttl><webMaster>Tea!</webMaster><item><title>mmdet库在安装时出现的问题</title><link>https://awsl12581.github.io/post/mmdet-ku-zai-an-zhuang-shi-chu-xian-de-wen-ti.html</link><description>```bash
+  Installing build dependencies ... done
+  Getting requirements to build wheel ... error
+  error: subprocess-exited-with-error
+  
+  × Getting requirements to build wheel did not run successfully.
+  │ exit code: 1
+  ╰─&gt; [17 lines of output]
+      Traceback (most recent call last):
+        File '/data/lg/UniAD/uniad2/lib/python3.9/site-packages/pip/_vendor/pyproject_hooks/_in_process/_in_process.py', line 389, in &lt;module&gt;
+          main()
+        File '/data/lg/UniAD/uniad2/lib/python3.9/site-packages/pip/_vendor/pyproject_hooks/_in_process/_in_process.py', line 373, in main
+          json_out['return_val'] = hook(**hook_input['kwargs'])
+        File '/data/lg/UniAD/uniad2/lib/python3.9/site-packages/pip/_vendor/pyproject_hooks/_in_process/_in_process.py', line 143, in get_requires_for_build_wheel
+          return hook(config_settings)
+        File '/tmp/pip-build-env-5xe49pcc/overlay/lib/python3.9/site-packages/setuptools/build_meta.py', line 333, in get_requires_for_build_wheel
+          return self._get_build_requires(config_settings, requirements=[])
+        File '/tmp/pip-build-env-5xe49pcc/overlay/lib/python3.9/site-packages/setuptools/build_meta.py', line 301, in _get_build_requires
+          self.run_setup()
+        File '/tmp/pip-build-env-5xe49pcc/overlay/lib/python3.9/site-packages/setuptools/build_meta.py', line 520, in run_setup
+          super().run_setup(setup_script=setup_script)
+        File '/tmp/pip-build-env-5xe49pcc/overlay/lib/python3.9/site-packages/setuptools/build_meta.py', line 317, in run_setup
+          exec(code, locals())
+        File '&lt;string&gt;', line 9, in &lt;module&gt;
+      ModuleNotFoundError: No module named 'torch'
+      [end of output]
+  
+  note: This error originates from a subprocess, and is likely not a problem with pip.
+ERROR: Failed to build 'mmdet3d' when getting requirements to build wheel
+```
+请使用
+``
+pip install --no-build-isolation -v mmdet==2.26.0 mmsegmentation==0.29.1 mmdet3d==1.0.0rc6
+``
+这主要是因为构建环境隔离问题
+
+2、
+
+```bash
+ File '/tmp/pip-build-env-9dlzmeme/overlay/lib/python3.9/site-packages/setuptools/build_meta.py', line 317, in run_setup
+      exec(code, locals())
+    File '&lt;string&gt;', line 6, in &lt;module&gt;
+  ModuleNotFoundError: No module named 'pkg_resources'
+  error: subprocess-exited-with-error
+  
+  × Getting requirements to build wheel did not run successfully.
+  │ exit code: 1
+  ╰─&gt; No available output.
+  
+  note: This error originates from a subprocess, and is likely not a problem with pip.
+```
+请使用
+``
+pip install 'setuptools&lt;70'
+``
+版本太高导致的。</description><guid isPermaLink="true">https://awsl12581.github.io/post/mmdet-ku-zai-an-zhuang-shi-chu-xian-de-wen-ti.html</guid><pubDate>Mon, 23 Feb 2026 10:47:26 +0000</pubDate></item><item><title>在vscode中使用Visual Studio 2022 Developer PowerShell</title><link>https://awsl12581.github.io/post/zai-vscode-zhong-shi-yong-Visual%20Studio%202022%20Developer%20PowerShell.html</link><description>```json
 {
     'python.testing.pytestArgs': [
         'test'
