@@ -350,65 +350,65 @@ body{box-sizing: border-box;min-width: 200px;max-width: 900px;margin: 20px auto;
 <div class="markdown-body" id="postBody"><h1>1.安装了pytorch的python虚拟环境</h1>
 <p><a target="_blank" rel="noopener noreferrer nofollow" href="https://camo.githubusercontent.com/00748a73649aa50d68f130b8e04a921c5ca7a280151e89ddf581a6f439d22486/68747470733a2f2f63646e2e6e6c61726b2e636f6d2f79757175652f302f323032342f706e672f32313736343233302f313732383433363537353738342d38653066623061662d633465342d343834622d613761392d3365393666303766386136362e706e67"><img src="https://camo.githubusercontent.com/00748a73649aa50d68f130b8e04a921c5ca7a280151e89ddf581a6f439d22486/68747470733a2f2f63646e2e6e6c61726b2e636f6d2f79757175652f302f323032342f706e672f32313736343233302f313732383433363537353738342d38653066623061662d633465342d343834622d613761392d3365393666303766386136362e706e67" alt="" data-canonical-src="https://cdn.nlark.com/yuque/0/2024/png/21764230/1728436575784-8e0fb0af-c4e4-484b-a7a9-3e96f07f8a66.png" style="max-width: 100%;"></a></p>
 <h1>2.cmake文件</h1>
-<div class="highlight highlight-source-cmake"><pre class="notranslate"><span class="pl-k">cmake_minimum_required</span>(<span class="pl-e">VERSION</span> 3.22)
-<span class="pl-k">project</span>(paperscuda LANGUAGES CUDA CXX)
+<div class="highlight highlight-source-cmake"><pre class="notranslate"><span class="pl-c1">cmake_minimum_required</span>(<span class="pl-c1">VERSION</span> <span class="pl-s">3.22</span>)
+<span class="pl-c1">project</span>(paperscuda <span class="pl-k">LANGUAGES</span> <span class="pl-c1">CUDA</span> <span class="pl-c1">CXX</span>)
 
-<span class="pl-k">set</span>(CMAKE_EXPORT_COMPILE_COMMANDS <span class="pl-k">ON</span> )
-<span class="pl-k">set</span>(CMAKE_CXX_STANDARD 17)
-<span class="pl-k">set</span>(CMAKE_CXX_STANDARD_REQUIRED <span class="pl-k">ON</span>)
-<span class="pl-k">set</span>(CMAKE_CXX_EXTENSIONS <span class="pl-k">ON</span>)
+<span class="pl-c1">set</span>(<span class="pl-c1">CMAKE_EXPORT_COMPILE_COMMANDS</span> <span class="pl-c1">ON</span> )
+<span class="pl-c1">set</span>(<span class="pl-c1">CMAKE_CXX_STANDARD</span> 17)
+<span class="pl-c1">set</span>(<span class="pl-c1">CMAKE_CXX_STANDARD_REQUIRED</span> <span class="pl-c1">ON</span>)
+<span class="pl-c1">set</span>(CMAKE_CXX_EXTENSIONS <span class="pl-c1">ON</span>)
 
-<span class="pl-c"># use cudnn for cuda &gt;12.0</span>
-<span class="pl-c"># set(CAFFE2_USE_CUDNN 1)</span>
-<span class="pl-k">set</span>(CAFFE2_USE_CUDNN <span class="pl-k">ON</span>)
+<span class="pl-c">#<span class="pl-c"> use cudnn for cuda &gt;12.0</span></span>
+<span class="pl-c">#<span class="pl-c"> set(CAFFE2_USE_CUDNN 1)</span></span>
+<span class="pl-c1">set</span>(CAFFE2_USE_CUDNN <span class="pl-c1">ON</span>)
 
-<span class="pl-c"># if(MSVC)</span>
-<span class="pl-c">#     add_compile_options("/source-charset:utf-8")</span>
-<span class="pl-c">#     add_compile_options("/execution-charset:gbk")</span>
-<span class="pl-c"># endif(MSVC)</span>
+<span class="pl-c">#<span class="pl-c"> if(MSVC)</span></span>
+<span class="pl-c">#<span class="pl-c">     add_compile_options("/source-charset:utf-8")</span></span>
+<span class="pl-c">#<span class="pl-c">     add_compile_options("/execution-charset:gbk")</span></span>
+<span class="pl-c">#<span class="pl-c"> endif(MSVC)</span></span>
 
 
-<span class="pl-k">set</span>(Python_ROOT_DIR <span class="pl-s">"<span class="pl-k">${CMAKE_SOURCE_DIR}</span>/.venv"</span>)
+<span class="pl-c1">set</span>(Python_ROOT_DIR <span class="pl-s">"<span class="pl-smi">${CMAKE_SOURCE_DIR}</span>/.venv"</span>)
 
-<span class="pl-c"># find python Interpreter</span>
-<span class="pl-c"># find_package(Python3 COMPONENTS Interpreter)</span>
-<span class="pl-k">find_package</span>(Python COMPONENTS Interpreter Development)
-<span class="pl-k">message</span>(<span class="pl-e">STATUS</span> <span class="pl-s">"Python interpreter: <span class="pl-k">${Python_EXECUTABLE}</span>"</span>)
+<span class="pl-c">#<span class="pl-c"> find python Interpreter</span></span>
+<span class="pl-c">#<span class="pl-c"> find_package(Python3 COMPONENTS Interpreter)</span></span>
+<span class="pl-c1">find_package</span>(<span class="pl-s">Python</span> <span class="pl-s">COMPONENTS</span> <span class="pl-s">Interpreter</span> <span class="pl-s">Development</span>)
+<span class="pl-c1">message</span>(<span class="pl-k">STATUS</span> <span class="pl-s">"Python interpreter: <span class="pl-smi">${Python_EXECUTABLE}</span>"</span>)
 
-<span class="pl-k">message</span>(<span class="pl-e">STATUS</span> <span class="pl-k">${Python_INCLUDE_DIRS}</span>)
+<span class="pl-c1">message</span>(<span class="pl-k">STATUS</span> <span class="pl-smi">${Python_INCLUDE_DIRS}</span>)
 
-<span class="pl-k">include_directories</span>(.)
+<span class="pl-c1">include_directories</span>(<span class="pl-s">.</span>)
 
-<span class="pl-k">set</span>(Torch_DIR <span class="pl-k">${Python_ROOT_DIR}</span>/Lib/site-packages/torch/share/cmake/Torch)
-<span class="pl-k">find_package</span>(Torch REQUIRED)
+<span class="pl-c1">set</span>(Torch_DIR <span class="pl-smi">${Python_ROOT_DIR}</span>/Lib/site-packages/torch/share/cmake/Torch)
+<span class="pl-c1">find_package</span>(<span class="pl-s">Torch</span> <span class="pl-s">REQUIRED</span>)
 
-<span class="pl-k">message</span>(<span class="pl-e">STATUS</span> <span class="pl-k">${CUDA_nvrtc_LIBRARY}</span>)
+<span class="pl-c1">message</span>(<span class="pl-k">STATUS</span> <span class="pl-smi">${CUDA_nvrtc_LIBRARY}</span>)
 
-<span class="pl-k">add_executable</span>(main main.cu)
-<span class="pl-c"># add_executable(matmul matmul.cu)</span>
-<span class="pl-k">message</span>(<span class="pl-e">STATUS</span> <span class="pl-k">${TORCH_LIBRARIES}</span>)
-<span class="pl-c"># lib link</span>
-<span class="pl-k">target_link_libraries</span>(main <span class="pl-k">${TORCH_LIBRARIES}</span>)
+<span class="pl-c1">add_executable</span>(<span class="pl-s">main</span> <span class="pl-s">main.cu</span>)
+<span class="pl-c">#<span class="pl-c"> add_executable(matmul matmul.cu)</span></span>
+<span class="pl-c1">message</span>(<span class="pl-k">STATUS</span> <span class="pl-smi">${TORCH_LIBRARIES}</span>)
+<span class="pl-c">#<span class="pl-c"> lib link</span></span>
+<span class="pl-c1">target_link_libraries</span>(<span class="pl-s">main</span> <span class="pl-smi">${TORCH_LIBRARIES}</span>)
 
-<span class="pl-c"># add dll to binary</span>
-<span class="pl-c"># 定义lib文件夹路径</span>
-<span class="pl-k">set</span>(LIB_DIR <span class="pl-k">${Python_ROOT_DIR}</span>/Lib/site-packages/torch/lib)
+<span class="pl-c">#<span class="pl-c"> add dll to binary</span></span>
+<span class="pl-c">#<span class="pl-c"> 定义lib文件夹路径</span></span>
+<span class="pl-c1">set</span>(LIB_DIR <span class="pl-smi">${Python_ROOT_DIR}</span>/Lib/site-packages/torch/lib)
 
-<span class="pl-c"># 设置目标二进制输出目录</span>
-<span class="pl-k">set</span>(BINARY_DIR <span class="pl-k">${PROJECT_BINARY_DIR}</span>)
+<span class="pl-c">#<span class="pl-c"> 设置目标二进制输出目录</span></span>
+<span class="pl-c1">set</span>(BINARY_DIR <span class="pl-smi">${PROJECT_BINARY_DIR}</span>)
 
-<span class="pl-c"># 查找所有 .dll 文件，排除 .lib 文件</span>
-<span class="pl-k">file</span>(GLOB DLL_FILES <span class="pl-s">"<span class="pl-k">${LIB_DIR}</span>/*.dll"</span>)
+<span class="pl-c">#<span class="pl-c"> 查找所有 .dll 文件，排除 .lib 文件</span></span>
+<span class="pl-c1">file</span>(<span class="pl-s">GLOB</span> <span class="pl-s">DLL_FILES</span> <span class="pl-s">"<span class="pl-smi">${LIB_DIR}</span>/*.dll"</span>)
 
-<span class="pl-c"># 添加自定义命令，在 POST_BUILD 阶段执行</span>
-<span class="pl-k">add_custom_command</span>(<span class="pl-k">TARGET</span> main POST_BUILD
-    <span class="pl-k">COMMAND</span> <span class="pl-k">${CMAKE_COMMAND}</span> -E make_directory <span class="pl-k">${BINARY_DIR}</span>  <span class="pl-c"># 确保目标目录存在</span>
-    <span class="pl-k">COMMAND</span> <span class="pl-k">${CMAKE_COMMAND}</span> -E copy_if_different <span class="pl-k">${DLL_FILES}</span> <span class="pl-k">${BINARY_DIR}</span>  <span class="pl-c"># 复制所有 .dll 文件到目标目录</span>
+<span class="pl-c">#<span class="pl-c"> 添加自定义命令，在 POST_BUILD 阶段执行</span></span>
+<span class="pl-c1">add_custom_command</span>(<span class="pl-c1">TARGET</span> <span class="pl-s">main</span> <span class="pl-s">POST_BUILD</span>
+    <span class="pl-c1">COMMAND</span> <span class="pl-smi">${CMAKE_COMMAND}</span> <span class="pl-s">-E</span> <span class="pl-s">make_directory</span> <span class="pl-smi">${BINARY_DIR}</span>  <span class="pl-c">#<span class="pl-c"> 确保目标目录存在</span></span>
+    <span class="pl-c1">COMMAND</span> <span class="pl-smi">${CMAKE_COMMAND}</span> <span class="pl-s">-E</span> <span class="pl-s">copy_if_different</span> <span class="pl-smi">${DLL_FILES}</span> <span class="pl-smi">${BINARY_DIR}</span>  <span class="pl-c">#<span class="pl-c"> 复制所有 .dll 文件到目标目录</span></span>
 )
-<span class="pl-c"># add_library(paperscuda SHARED library.cu)</span>
+<span class="pl-c">#<span class="pl-c"> add_library(paperscuda SHARED library.cu)</span></span>
 
-<span class="pl-c"># set_target_properties(main PROPERTIES</span>
-<span class="pl-c">#         CUDA_SEPARABLE_COMPILATION ON)</span>
+<span class="pl-c">#<span class="pl-c"> set_target_properties(main PROPERTIES</span></span>
+<span class="pl-c">#<span class="pl-c">         CUDA_SEPARABLE_COMPILATION ON)</span></span>
 </pre></div>
 <p>main.cu</p>
 <div class="highlight highlight-source-c++"><pre class="notranslate">#<span class="pl-k">include</span> <span class="pl-s"><span class="pl-pds">&lt;</span>iostream<span class="pl-pds">&gt;</span></span>
@@ -480,37 +480,37 @@ __global__ <span class="pl-k">void</span> <span class="pl-en">matmul_gpu</span>(
 [cmake] -- USE_CUSPARSELT is set to 0. Compiling without cuSPARSELt support
 </code></pre>
 <p>在cuda&gt;12.0时，观察caffe的cmake文件可以看到，需要设置：</p>
-<div class="highlight highlight-source-cmake"><pre class="notranslate"><span class="pl-c"># use cudnn for cuda &gt;12.0</span>
-<span class="pl-c"># set(CAFFE2_USE_CUDNN 1)</span>
-<span class="pl-c"># set(CAFFE2_USE_CUDNN ON)</span></pre></div>
+<div class="highlight highlight-source-cmake"><pre class="notranslate"><span class="pl-c">#<span class="pl-c"> use cudnn for cuda &gt;12.0</span></span>
+<span class="pl-c">#<span class="pl-c"> set(CAFFE2_USE_CUDNN 1)</span></span>
+<span class="pl-c">#<span class="pl-c"> set(CAFFE2_USE_CUDNN ON)</span></span></pre></div>
 <p>，值得注意的是，需要提前安装cudnn（将相关文件复制到cuda文件夹下）并配置相关Path变量：</p>
-<div class="highlight highlight-source-cmake"><pre class="notranslate">C:\<span class="pl-k">Program</span> <span class="pl-e">Files</span>\NVIDIA GPU Computing Toolkit\CUDA\v12.1\bin
-C:\<span class="pl-k">Program</span> <span class="pl-e">Files</span>\NVIDIA GPU Computing Toolkit\CUDA\v12.1\libnvvp
-C:\<span class="pl-k">Program</span> <span class="pl-e">Files</span>\NVIDIA GPU Computing Toolkit\CUDA\v12.1\<span class="pl-e">include</span>
-C:\<span class="pl-k">Program</span> <span class="pl-e">Files</span>\NVIDIA GPU Computing Toolkit\CUDA\v12.1\lib</pre></div>
+<div class="highlight highlight-source-cmake"><pre class="notranslate"><span class="pl-s">C:</span>\<span class="pl-k">Program</span> <span class="pl-c1">Files</span>\<span class="pl-s">NVIDIA</span> <span class="pl-s">GPU</span> <span class="pl-s">Computing</span> <span class="pl-s">Toolkit</span>\<span class="pl-s">CUDA</span>\<span class="pl-s">v12.1</span>\<span class="pl-s">bin</span>
+<span class="pl-s">C:</span>\<span class="pl-k">Program</span> <span class="pl-c1">Files</span>\<span class="pl-s">NVIDIA</span> <span class="pl-s">GPU</span> <span class="pl-s">Computing</span> <span class="pl-s">Toolkit</span>\<span class="pl-s">CUDA</span>\<span class="pl-s">v12.1</span>\<span class="pl-s">libnvvp</span>
+<span class="pl-s">C:</span>\<span class="pl-k">Program</span> <span class="pl-c1">Files</span>\<span class="pl-s">NVIDIA</span> <span class="pl-s">GPU</span> <span class="pl-s">Computing</span> <span class="pl-s">Toolkit</span>\<span class="pl-s">CUDA</span>\<span class="pl-s">v12.1</span>\<span class="pl-c1">include</span>
+<span class="pl-s">C:</span>\<span class="pl-k">Program</span> <span class="pl-c1">Files</span>\<span class="pl-s">NVIDIA</span> <span class="pl-s">GPU</span> <span class="pl-s">Computing</span> <span class="pl-s">Toolkit</span>\<span class="pl-s">CUDA</span>\<span class="pl-s">v12.1</span>\<span class="pl-s">lib</span></pre></div>
 <h2>4.编译时出现的A single input file is required for a non-link phase when an outputfile is specified</h2>
 <p>出现的原因如下：</p>
-<div class="highlight highlight-source-cmake"><pre class="notranslate"><span class="pl-c"># if(MSVC)</span>
-<span class="pl-c">#     add_compile_options("/source-charset:utf-8")</span>
-<span class="pl-c">#     add_compile_options("/execution-charset:gbk")</span>
-<span class="pl-c"># endif(MSVC)</span></pre></div>
+<div class="highlight highlight-source-cmake"><pre class="notranslate"><span class="pl-c">#<span class="pl-c"> if(MSVC)</span></span>
+<span class="pl-c">#<span class="pl-c">     add_compile_options("/source-charset:utf-8")</span></span>
+<span class="pl-c">#<span class="pl-c">     add_compile_options("/execution-charset:gbk")</span></span>
+<span class="pl-c">#<span class="pl-c"> endif(MSVC)</span></span></pre></div>
 <p>NVCC 不喜欢从 CXX 编译器传递的任何<code class="notranslate">&lt;font style="color:rgb(12, 13, 14);"&gt;/&lt;/font&gt;</code>标志</p>
 <p>一个可能的设置是（或者不使用中文注释）：</p>
-<div class="highlight highlight-source-cmake"><pre class="notranslate"><span class="pl-k">set</span>(my_cxx_flags -DBOOST_ASIO_DISABLE_CONCEPTS /std:c++latest /await:strict /bigobj <span class="pl-s">"/Zc:__cplusplus"</span>)
+<div class="highlight highlight-source-cmake"><pre class="notranslate"><span class="pl-c1">set</span>(my_cxx_flags -DBOOST_ASIO_DISABLE_CONCEPTS /std:c++latest /await:strict /bigobj <span class="pl-s">"/Zc:__cplusplus"</span>)
 
-<span class="pl-k">target_compile_options</span>(<span class="pl-k">${project}</span> <span class="pl-e">PRIVATE</span> $&lt;$&lt;COMPILE_LANGUAGE:CXX&gt;:<span class="pl-k">${my_cxx_flags}</span>&gt; )</pre></div>
+<span class="pl-c1">target_compile_options</span>(<span class="pl-smi">${project}</span> <span class="pl-c1">PRIVATE</span> $&lt;$&lt;<span class="pl-k">COMPILE_LANGUAGE</span>:<span class="pl-k">CXX</span>&gt;:<span class="pl-smi">${my_cxx_flags}</span>&gt; )</pre></div>
 <h2>5.关于运行时c10.dll等无法找到</h2>
 <p>这是因为使用了动态库dll，在target_link时只是把lib（lib在动态库只有符号表的作用，在静态库会在链接时全部链接）符号表加入进去了，运行时需要把运行库dll也加入到当前文件夹下</p>
 <p>一个可以参考的指令如下：</p>
-<div class="highlight highlight-source-cmake"><pre class="notranslate"><span class="pl-c"># 定义lib文件夹路径</span>
-<span class="pl-k">set</span>(LIB_DIR <span class="pl-k">${PROJECT_SOURCE_DIR}</span>/3rdparty/haikangsdk/lib)
+<div class="highlight highlight-source-cmake"><pre class="notranslate"><span class="pl-c">#<span class="pl-c"> 定义lib文件夹路径</span></span>
+<span class="pl-c1">set</span>(LIB_DIR <span class="pl-smi">${PROJECT_SOURCE_DIR}</span>/3rdparty/haikangsdk/lib)
 
-<span class="pl-c"># 定义目标二进制输出目录</span>
-<span class="pl-k">set</span>(BINARY_DIR <span class="pl-k">${PROJECT_BINARY_DIR}</span>)
-<span class="pl-k">add_custom_command</span>(<span class="pl-k">TARGET</span> <span class="pl-k">test</span> POST_BUILD
-    <span class="pl-k">COMMAND</span> <span class="pl-k">${CMAKE_COMMAND}</span> -E copy_directory
-    <span class="pl-k">${LIB_DIR}</span>
-    $&lt;TARGET_FILE_DIR:<span class="pl-k">test</span>&gt;
+<span class="pl-c">#<span class="pl-c"> 定义目标二进制输出目录</span></span>
+<span class="pl-c1">set</span>(BINARY_DIR <span class="pl-smi">${PROJECT_BINARY_DIR}</span>)
+<span class="pl-c1">add_custom_command</span>(<span class="pl-c1">TARGET</span> <span class="pl-c1">test</span> <span class="pl-s">POST_BUILD</span>
+    <span class="pl-c1">COMMAND</span> <span class="pl-smi">${CMAKE_COMMAND}</span> <span class="pl-s">-E</span> <span class="pl-s">copy_directory</span>
+    <span class="pl-smi">${LIB_DIR}</span>
+    $&lt;<span class="pl-k">TARGET_FILE_DIR</span>:<span class="pl-k">test</span>&gt;
 )</pre></div>
 <p>注意，需要找到所有dll文件才行</p>
 <h2>6.关于__gobal__非良构现象</h2>
