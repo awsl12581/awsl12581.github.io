@@ -206,7 +206,7 @@ Tensor outputs_arr[<span class="pl-c1">1</span>] = { out };</pre></div>
 (CUDA:0, KVCache)   -&gt; KV cache allocator
 </code></pre>
 <p><code class="notranslate">make_empty_like_shape()</code> 对 host memory kind 有一个显式约束：</p>
-<div class="highlight highlight-source-c++"><pre class="notranslate"><span class="pl-k">if</span> ((kind == MemoryKind::HostPinned || kind == MemoryKind::HostPageable) &amp;&amp; device.type != DeviceType::CPU)
+<div class="highlight highlight-source-c++"><pre class="notranslate"><span class="pl-k">if</span> ((kind == MemoryKind::HostPinned || kind == MemoryKind::HostPageable) &amp;&amp; device.type != DeviceType::<span class="pl-c1">CPU</span>)
 {
     <span class="pl-k">return</span> Tensor { };
 }</pre></div>

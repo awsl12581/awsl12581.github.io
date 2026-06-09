@@ -356,7 +356,7 @@ body{box-sizing: border-box;min-width: 200px;max-width: 900px;margin: 20px auto;
 <span class="pl-c1">set</span>(<span class="pl-c1">CMAKE_EXPORT_COMPILE_COMMANDS</span> <span class="pl-c1">ON</span> )
 <span class="pl-c1">set</span>(<span class="pl-c1">CMAKE_CXX_STANDARD</span> 17)
 <span class="pl-c1">set</span>(<span class="pl-c1">CMAKE_CXX_STANDARD_REQUIRED</span> <span class="pl-c1">ON</span>)
-<span class="pl-c1">set</span>(CMAKE_CXX_EXTENSIONS <span class="pl-c1">ON</span>)
+<span class="pl-c1">set</span>(<span class="pl-c1">CMAKE_CXX_EXTENSIONS</span> <span class="pl-c1">ON</span>)
 
 <span class="pl-c">#<span class="pl-c"> use cudnn for cuda &gt;12.0</span></span>
 <span class="pl-c">#<span class="pl-c"> set(CAFFE2_USE_CUDNN 1)</span></span>
@@ -368,7 +368,7 @@ body{box-sizing: border-box;min-width: 200px;max-width: 900px;margin: 20px auto;
 <span class="pl-c">#<span class="pl-c"> endif(MSVC)</span></span>
 
 
-<span class="pl-c1">set</span>(Python_ROOT_DIR <span class="pl-s">"<span class="pl-smi">${CMAKE_SOURCE_DIR}</span>/.venv"</span>)
+<span class="pl-c1">set</span>(Python_ROOT_DIR <span class="pl-s">"<span class="pl-smi">${<span class="pl-c1">CMAKE_SOURCE_DIR</span>}</span>/.venv"</span>)
 
 <span class="pl-c">#<span class="pl-c"> find python Interpreter</span></span>
 <span class="pl-c">#<span class="pl-c"> find_package(Python3 COMPONENTS Interpreter)</span></span>
@@ -395,15 +395,15 @@ body{box-sizing: border-box;min-width: 200px;max-width: 900px;margin: 20px auto;
 <span class="pl-c1">set</span>(LIB_DIR <span class="pl-smi">${Python_ROOT_DIR}</span>/Lib/site-packages/torch/lib)
 
 <span class="pl-c">#<span class="pl-c"> 设置目标二进制输出目录</span></span>
-<span class="pl-c1">set</span>(BINARY_DIR <span class="pl-smi">${PROJECT_BINARY_DIR}</span>)
+<span class="pl-c1">set</span>(BINARY_DIR <span class="pl-smi">${<span class="pl-c1">PROJECT_BINARY_DIR</span>}</span>)
 
 <span class="pl-c">#<span class="pl-c"> 查找所有 .dll 文件，排除 .lib 文件</span></span>
 <span class="pl-c1">file</span>(<span class="pl-s">GLOB</span> <span class="pl-s">DLL_FILES</span> <span class="pl-s">"<span class="pl-smi">${LIB_DIR}</span>/*.dll"</span>)
 
 <span class="pl-c">#<span class="pl-c"> 添加自定义命令，在 POST_BUILD 阶段执行</span></span>
 <span class="pl-c1">add_custom_command</span>(<span class="pl-c1">TARGET</span> <span class="pl-s">main</span> <span class="pl-s">POST_BUILD</span>
-    <span class="pl-c1">COMMAND</span> <span class="pl-smi">${CMAKE_COMMAND}</span> <span class="pl-s">-E</span> <span class="pl-s">make_directory</span> <span class="pl-smi">${BINARY_DIR}</span>  <span class="pl-c">#<span class="pl-c"> 确保目标目录存在</span></span>
-    <span class="pl-c1">COMMAND</span> <span class="pl-smi">${CMAKE_COMMAND}</span> <span class="pl-s">-E</span> <span class="pl-s">copy_if_different</span> <span class="pl-smi">${DLL_FILES}</span> <span class="pl-smi">${BINARY_DIR}</span>  <span class="pl-c">#<span class="pl-c"> 复制所有 .dll 文件到目标目录</span></span>
+    <span class="pl-c1">COMMAND</span> <span class="pl-smi">${<span class="pl-c1">CMAKE_COMMAND</span>}</span> <span class="pl-s">-E</span> <span class="pl-s">make_directory</span> <span class="pl-smi">${BINARY_DIR}</span>  <span class="pl-c">#<span class="pl-c"> 确保目标目录存在</span></span>
+    <span class="pl-c1">COMMAND</span> <span class="pl-smi">${<span class="pl-c1">CMAKE_COMMAND</span>}</span> <span class="pl-s">-E</span> <span class="pl-s">copy_if_different</span> <span class="pl-smi">${DLL_FILES}</span> <span class="pl-smi">${BINARY_DIR}</span>  <span class="pl-c">#<span class="pl-c"> 复制所有 .dll 文件到目标目录</span></span>
 )
 <span class="pl-c">#<span class="pl-c"> add_library(paperscuda SHARED library.cu)</span></span>
 
@@ -503,12 +503,12 @@ __global__ <span class="pl-k">void</span> <span class="pl-en">matmul_gpu</span>(
 <p>这是因为使用了动态库dll，在target_link时只是把lib（lib在动态库只有符号表的作用，在静态库会在链接时全部链接）符号表加入进去了，运行时需要把运行库dll也加入到当前文件夹下</p>
 <p>一个可以参考的指令如下：</p>
 <div class="highlight highlight-source-cmake"><pre class="notranslate"><span class="pl-c">#<span class="pl-c"> 定义lib文件夹路径</span></span>
-<span class="pl-c1">set</span>(LIB_DIR <span class="pl-smi">${PROJECT_SOURCE_DIR}</span>/3rdparty/haikangsdk/lib)
+<span class="pl-c1">set</span>(LIB_DIR <span class="pl-smi">${<span class="pl-c1">PROJECT_SOURCE_DIR</span>}</span>/3rdparty/haikangsdk/lib)
 
 <span class="pl-c">#<span class="pl-c"> 定义目标二进制输出目录</span></span>
-<span class="pl-c1">set</span>(BINARY_DIR <span class="pl-smi">${PROJECT_BINARY_DIR}</span>)
+<span class="pl-c1">set</span>(BINARY_DIR <span class="pl-smi">${<span class="pl-c1">PROJECT_BINARY_DIR</span>}</span>)
 <span class="pl-c1">add_custom_command</span>(<span class="pl-c1">TARGET</span> <span class="pl-c1">test</span> <span class="pl-s">POST_BUILD</span>
-    <span class="pl-c1">COMMAND</span> <span class="pl-smi">${CMAKE_COMMAND}</span> <span class="pl-s">-E</span> <span class="pl-s">copy_directory</span>
+    <span class="pl-c1">COMMAND</span> <span class="pl-smi">${<span class="pl-c1">CMAKE_COMMAND</span>}</span> <span class="pl-s">-E</span> <span class="pl-s">copy_directory</span>
     <span class="pl-smi">${LIB_DIR}</span>
     $&lt;<span class="pl-k">TARGET_FILE_DIR</span>:<span class="pl-k">test</span>&gt;
 )</pre></div>
